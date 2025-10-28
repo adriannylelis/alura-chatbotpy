@@ -143,7 +143,6 @@ Você não deve responder perguntas que não sejam dados do ecommerce informado!
 
 ## 🚀 Melhorias Futuras
 
-- [ ] Adicionar histórico de conversas
 - [ ] Implementar autenticação de usuários
 - [ ] Criar base de conhecimento específica da loja
 - [ ] Adicionar suporte a imagens

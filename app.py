@@ -7,6 +7,7 @@ from helper import carrega, salva
 from selecionar_persona import personas, selecionar_persona
 from gerenciar_historico import remover_mensagens_mais_antigas
 import uuid
+from gerenciar_imagem import gerar_imagem_gemini
 
 load_dotenv()
 
@@ -18,6 +19,9 @@ app = Flask(__name__)
 app.secret_key = 'alura'
 
 contexto = carrega("dados/musimart.txt")
+
+caminho_imagem_enviada = None
+UPLOAD_FOLDER = 'imagens_temporarias'
 
 def criar_chatbot():
     personalidade = personas['neutro']
@@ -58,6 +62,7 @@ chatbot = criar_chatbot()
 def bot(prompt):
     maximo_tentativas = 1
     repeticao = 0
+    global caminho_imagem_enviada
 
     while True:
         try:
@@ -70,7 +75,16 @@ def bot(prompt):
             Responda a seguinte mensagem, sesmpre lembrando do histórico da conversa:
             {prompt}
             """
-            resposta = chatbot.send_message(mensagem_usuario)
+
+            if caminho_imagem_enviada:
+                mensagem_usuario += "\n Utilize as características da imagem enviada para melhorar a resposta.\n"
+                arquivo_imagem = gerar_imagem_gemini(caminho_imagem_enviada)
+                resposta = chatbot.send_message([arquivo_imagem, mensagem_usuario])
+                os.remove(caminho_imagem_enviada)
+                caminho_imagem_enviada = None
+            else:
+                resposta = chatbot.send_message(mensagem_usuario)
+
 
             if len(chatbot.history) > 8:
                 chatbot.history = remover_mensagens_mais_antigas(chatbot.history)
@@ -81,6 +95,10 @@ def bot(prompt):
             repeticao += 1
             if repeticao >= maximo_tentativas:
                 return "Erro no Gemini: %s" % erro
+            
+            if caminho_imagem_enviada:
+                os.remove(caminho_imagem_enviada)
+                caminho_imagem_enviada = None
             
             sleep(50)
 
